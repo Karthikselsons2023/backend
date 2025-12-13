@@ -1,6 +1,7 @@
 import express from "express";
 import db2 from "./lib/db.js";//db connection
 import cors from "cors";
+import cookieParser from "cookie-parser";
 // import cookieParser from "cookie-parser";
 
 // routes
@@ -12,6 +13,7 @@ import User from "./model/User.js";
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(cors({
     origin: ["http://localhost:5173", "http://192.168.1.16:5173"],

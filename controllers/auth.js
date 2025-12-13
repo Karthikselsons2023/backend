@@ -35,9 +35,8 @@ export const login = async (req, res) => {
     generateToken(user.user_id, res);
     // SUCCESS RESPONSE
     return res.status(200).json({
-      id: user.id,
+       user_id: user.user_id, 
       fullName: user.name,
-      user_id: user.user_id,
       email: user.email,
       profilePic: user.profile,
       
@@ -49,16 +48,7 @@ export const login = async (req, res) => {
   }
 };
 
-   //logout any existing session
-    export const logout = (req, res) => {
-  try {
-     
-    res.status(200).json({ message: "Logged out successfully" });
-  } catch (error) {
-    console.log("Error in logout controller", error.message);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
+   
 
 export const checkAuth = async (req, res) => {
   try {
@@ -66,5 +56,16 @@ export const checkAuth = async (req, res) => {
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
     res.status(500).json({ message: "Internal Server error" });
+  }
+};
+
+//logout any existing session
+    export const logout = (req, res) => {
+  try {
+     
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.log("Error in logout controller", error.message);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
