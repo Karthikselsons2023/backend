@@ -2,7 +2,7 @@ import { Op, Sequelize } from "sequelize";
 import { Chat, ChatUser } from "../model/index.model.js";
 import User from "../model/User.js";
 import ChatMessage from "../model/chatMessage.js";
-
+import {getReceiverSocketId} from "../lib/socket.js";
 export const openChat = async (req, res) => {
   try {
     const currentUser = req.user.user_id;
@@ -84,9 +84,9 @@ export const openChat = async (req, res) => {
 
 export const getMessages = async (req, res) => {
   try{
-    const sender_id = req.body.sender_id;
-    const receiver_id = req.body.receiver_id;
-
+    // const sender_id = req.query.sender_id;
+    // const receiver_id = req.query.receiver_id;
+const { sender_id, receiver_id } = req.query;
     if (!receiver_id ) {
       return res.status(400).json({ message: "receiver_id required" });
     }
