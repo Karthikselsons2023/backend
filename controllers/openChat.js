@@ -80,3 +80,32 @@ export const openChat = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+export const getMessages = async (req, res) => {
+  try{
+    const sender_id = req.body.sender_id;
+    const receiver_id = req.body.receiver_id;
+
+    if (!receiver_id ) {
+      return res.status(400).json({ message: "receiver_id required" });
+    }
+
+    const messages = await ChatMessage.findAll({
+       where:{
+        user_id: { [Op.in]: [sender_id, receiver_id] }
+       },
+        attributes: ["user_id", "message_text", "created_at"],
+       order: [['created_at', 'ASC']]
+    });
+    return res.status(200).json({
+      success: true,
+      messages 
+    });
+
+  }
+  catch(err){
+    console.error("getMessages error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
