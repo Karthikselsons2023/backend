@@ -6,7 +6,7 @@ import User from "../model/User.js";
 export const users=async(req,res)=>{
     const baseurl = "http://selsons.com/";
 
-    
+     
     const users = await User.findAll({
         where:{ role: 'staff' },
         attributes: { exclude: ['password'] }

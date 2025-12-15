@@ -9,6 +9,8 @@ import { initSocket } from "./lib/socket.js";
 // routes
 import authroutes from "./route/auth.route.js";
 import userroutes from "./route/user.route.js";
+import chatRoutes from "./route/chat.route.js";
+
 
 dotenv.config();
 
@@ -27,7 +29,7 @@ app.use(cors({
 // routes
 app.use("/auth", authroutes);
 app.use("/", userroutes);
-
+app.use("/chat", chatRoutes);
 // DB connect
 db2.authenticate()
   .then(() => console.log("✅ Sequelize Connected Successfully!"))

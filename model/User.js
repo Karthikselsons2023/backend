@@ -1,27 +1,22 @@
 import { DataTypes } from "sequelize";
-import db2 from "../lib/db.js";
+import db from "../lib/db.js";
 
-const User = db2.define("User", {
-    name: {
-        type: DataTypes.STRING
+const User = db.define("user", {
+    id: {                  // primary key
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
     },
-    email:{
-        type: DataTypes.STRING
+    user_id: {             // unique identifier used in chat tables
+        type: DataTypes.STRING,
+        unique: true
     },
-    password:{
-        type: DataTypes.STRING
-    },
-    profile:{
-        type: DataTypes.STRING
-    },
-    phone:{
-        type: DataTypes.INTEGER
-    },
-    user_id:{
-        type: DataTypes.STRING
-    }
-},
-{
+    name: DataTypes.STRING,
+    email: DataTypes.STRING,
+    password: DataTypes.STRING,
+    profile: DataTypes.STRING,
+    phone: DataTypes.STRING
+}, {
     tableName: "users",
     timestamps: false
 });

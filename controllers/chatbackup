@@ -1,0 +1,67 @@
+import { Op, Sequelize } from "sequelize";
+import { Chat, ChatUser } from "../model/index.model.js";
+import User from "../model/User.js";
+
+export const openChat = async (req, res) => {
+  try {
+    const currentUser = req.user.user_id;
+   
+    const otherUserParam = req.params.user_id;
+
+    // validate other user
+    const user = await User.findOne({ where: { user_id: otherUserParam } });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const otherUserId = user.user_id;
+ 
+    // 1️⃣ find existing chat_id having both users
+    const chatUserRows = await ChatUser.findAll({
+      attributes: ["chat_id"],
+      where: {
+        user_id: { [Op.in]: [currentUser, otherUserId] }
+      },
+      group: ["chat_id"],
+      having: Sequelize.literal("COUNT(DISTINCT user_id) = 2")
+    });
+    
+
+    let chat;
+
+    // 2️⃣ create chat if not exists
+    if (chatUserRows.length === 0) {
+      chat = await Chat.create({
+        type: "private",
+        created_by: currentUser
+      });
+
+      await ChatUser.bulkCreate([
+        {
+          chat_id: chat.id,
+          user_id: currentUser,
+          role: "member"
+        },
+        {
+          chat_id: chat.id,
+          user_id: otherUserId,
+          role: "member"
+        }
+      ]);
+    } else {
+      // 3️⃣ load existing chat
+      chat = await Chat.findOne({
+        where: { id: chatUserRows[0].chat_id }
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      chat_id: chat.id
+    });
+
+  } catch (err) {
+    console.error("openChat error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

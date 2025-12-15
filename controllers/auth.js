@@ -10,6 +10,9 @@ export const login = async (req, res) => {
 
   try {
     const email=req.body.email;
+    if(!email){
+        return res.status(400).json({ message: "Email is required" });
+    }
     const password=req.body.password;
     console.log("📌 Login route hit", req.body); // ← to test route
     
