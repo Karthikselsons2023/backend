@@ -6,7 +6,7 @@ const router = express.Router();
 
 // GET /chat/:user_id → open chat with this user
 // router.get("/:user_id", protectRoute, openChat);
-router.post("/send", protectRoute, openChat);
+router.post("/send", openChat);
 router.get("/getMessages", protectRoute, getMessages);
 
 export default router;

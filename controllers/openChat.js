@@ -5,89 +5,81 @@ import ChatMessage from "../model/chatMessage.js";
 import {getReceiverSocketId,getIo} from "../lib/socket.js";
 export const openChat = async (req, res) => {
   try {
-    const currentUser = req.user.user_id;
-    const receiver_id = req.body.receiver_id;
-    const message = req.body.message;
-    const sender_id = req.body.sender_id;
+    console.log("REQ BODY:", req.body);
+    const { sender_id, receiver_id, message_text } = req.body;
 
-    // return res.status(200).json({ currentUser, receiver_id, message, sender_id });
-    
-    if (!receiver_id || !message) {
-      return res.status(400).json({ message: "receiver_id and message required" });
+    if (!sender_id || !receiver_id || !message_text) {
+      return res.status(400).json({
+        message: "sender_id, receiver_id, message_text required",
+      });
     }
 
-    // validate other user
+    // validate receiver
     const user = await User.findOne({ where: { user_id: receiver_id } });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const otherUserId = user.user_id;
- 
-    // 1️⃣ find existing chat_id having both users
+    // find existing chat
     const chatUserRows = await ChatUser.findAll({
       attributes: ["chat_id"],
       where: {
-        user_id: { [Op.in]: [sender_id, receiver_id] }
+        user_id: { [Op.in]: [sender_id, receiver_id] },
       },
       group: ["chat_id"],
-      having: Sequelize.literal("COUNT(DISTINCT user_id) = 2")
+      having: Sequelize.literal("COUNT(DISTINCT user_id) = 2"),
     });
-    
 
     let chat;
 
-    // 2️⃣ create chat if not exists
     if (chatUserRows.length === 0) {
       chat = await Chat.create({
         type: "private",
-        created_by: sender_id
+        created_by: sender_id,
       });
 
       await ChatUser.bulkCreate([
-        {
-          chat_id: chat.id,
-          user_id: sender_id,
-          role: "member"
-        },
-        {
-          chat_id: chat.id,
-          user_id: receiver_id,
-          role: "member"
-        }
+        { chat_id: chat.id, user_id: sender_id, role: "member" },
+        { chat_id: chat.id, user_id: receiver_id, role: "member" },
       ]);
     } else {
-      // 3️⃣ load existing chat
-      chat = await Chat.findOne({where: { id: chatUserRows[0].chat_id }});
-        // chat = await Chat.findByPk(chatUserRows[0].chat_id);
+      chat = await Chat.findByPk(chatUserRows[0].chat_id);
     }
 
-     // 3️⃣ Insert message
+    // save message
     const chatMessage = await ChatMessage.create({
       chat_id: chat.id,
-      user_id: sender_id,       // sender stored here
-      message_text: message
+      user_id: sender_id,
+      message_text,
     });
 
-      // 3️⃣ send message in real-time to receiver if online
-    const receiverSocketId = getReceiverSocketId(receiver_id);
-    const io = getIo();
+    // socket emit
+    const senderSocketId = getReceiverSocketId(sender_id);
+const receiverSocketId = getReceiverSocketId(receiver_id);
 
-    if (receiverSocketId && io) {
-      io.to(receiverSocketId).emit("newMessage", {
-        chat_id: chat.id,
-        sender_id: sender_id,
-        message_text: message,
-        created_at: chatMessage.created_at,
-      });
-    }
+    const io = getIo();
+    console.log(senderSocketId, receiverSocketId)
+
+const socketPayload = {
+  user_id: sender_id,
+  receiver_id,
+  message_text,
+  created_at: chatMessage.created_at,
+};
+
+if (receiverSocketId) {
+  io.to(receiverSocketId).emit("newMessage", socketPayload);
+}
+
+if (senderSocketId) {
+  io.to(senderSocketId).emit("newMessage", socketPayload);
+}
+
 
     return res.status(201).json({
       success: true,
-      chat_id: chat.id,
-      message: chatMessage
+      message: chatMessage,
     });
-
   } catch (err) {
     console.error("openChat error:", err);
     res.status(500).json({ message: "Internal server error" });
@@ -95,22 +87,37 @@ export const openChat = async (req, res) => {
 };
 
 
+
 export const getMessages = async (req, res) => {
   try{
-    // const sender_id = req.query.sender_id;
-    // const receiver_id = req.query.receiver_id;
+    
 const { sender_id, receiver_id } = req.query;
+
+ 
     if (!receiver_id ) {
       return res.status(400).json({ message: "receiver_id required" });
     }
-// 2️⃣ insert message
+    const user = await User.findOne({ where: { user_id: receiver_id } });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const chat_id=await ChatUser.findAll({
+      attributes: ["chat_id"],
+      where: {
+        user_id: { [Op.in]: [sender_id, receiver_id] },
+      },
+      group: ["chat_id"],
+      having: Sequelize.literal("COUNT(DISTINCT user_id) = 2"),
+    }).then(rows=>rows.length>0?rows[0].chat_id:null);
+
+    // return res.status(200).json({ chat_id });
+
     const messages = await ChatMessage.findAll({
-       where:{
-        user_id: { [Op.in]: [sender_id, receiver_id] }
-       },
-        attributes: ["user_id", "message_text", "created_at"],
-       order: [['created_at', 'ASC']]
+      where: { chat_id },
+      attributes: ["user_id", "message_text", "created_at"],
+      order: [["created_at", "ASC"]],
     });
+ 
 
     
 
@@ -125,3 +132,6 @@ const { sender_id, receiver_id } = req.query;
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+
