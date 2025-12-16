@@ -8,8 +8,9 @@ const router = express.Router();
 // router.get("/:user_id", protectRoute, openChat);
 router.post("/send", openChat);
 router.get("/getMessages", protectRoute, getMessages);
-router.post("/sendGroup", protectRoute, createGroupChat);
+router.post("/createGroup", protectRoute, createGroupChat);
 router.get("/getGroupMessages", protectRoute, getGroupMessages);
 router.post("/sendGroupMessage", protectRoute, sendGroupMessage);
+
 
 export default router;
