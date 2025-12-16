@@ -1,6 +1,6 @@
 import { Op, Sequelize } from "sequelize";
-import { Chat, ChatUser } from "../model/index.model.js";
-import User from "../model/User.js";
+import { Chat, ChatUser,User } from "../model/index.model.js";
+// import User from "../model/User.js";
 import ChatMessage from "../model/chatMessage.js";
 import {getReceiverSocketId,getIo} from "../lib/socket.js";
 
@@ -265,6 +265,43 @@ export const sendGroupMessage = async (req, res) => {
   }
   catch(err){
     console.error("sendGroupMessage error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export const groupInfo = async (req, res) => {
+  try{
+    const {chatId} = req.query;
+// return res.status(200).json({ chatId });
+    if(!chatId){
+      return res.status(400).json({ message: "chatId is required" });
+    }
+
+    const groupInfo = await Chat.findOne({
+      where: { id: chatId },
+      attributes: [
+        ["id","chat_id"] , ["name","group_name"], ["image_url","group_image"], ["descritpion","group_description"]],
+      include: [
+        {
+        model: ChatUser,
+        attributes: ["user_id", "role","group_admin","group_status"],  
+        include: [
+          {
+            model: User,  
+            attributes: ["name", "email", "profile", "phone"]
+          }
+        ]
+    }
+  ]
+  });
+
+  return res.status(200).json({
+    success: true,
+    groupInfo
+  });
+}
+  catch(err){
+    console.error("groupInfo error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 }

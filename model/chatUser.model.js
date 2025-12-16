@@ -7,7 +7,9 @@ const ChatUser = db.define("chat_user", {
   chat_id: DataTypes.INTEGER,
   user_id: DataTypes.STRING,
   role: DataTypes.STRING,
-      group_admin: DataTypes.BOOLEAN
+      group_admin: DataTypes.BOOLEAN,
+      group_status: DataTypes.BOOLEAN,
+
 }, { 
     tableName: "sharing_chat_user", 
     timestamps: true,
