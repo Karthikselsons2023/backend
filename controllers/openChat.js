@@ -8,7 +8,7 @@ import {getReceiverSocketId,getIo} from "../lib/socket.js";
 export const openChat = async (req, res) => {
   try {
     console.log("REQ BODY:", req.body);
-    const { sender_id, receiver_id, message_text } = req.body;
+    const { sender_id, receiver_id, message_text,file_type,file_url } = req.body;
 
     if (!sender_id || !receiver_id || !message_text) {
       return res.status(400).json({
@@ -53,6 +53,8 @@ export const openChat = async (req, res) => {
       chat_id: chat.id,
       user_id: sender_id,
       message_text,
+      file_type,
+      file_url
     });
 
     // socket emit
