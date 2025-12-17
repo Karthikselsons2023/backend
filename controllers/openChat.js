@@ -162,20 +162,7 @@ export const sidebarChatList = async (req, res) => {
     });
    
     const chatIds = chats.map((chat) => chat.chat_id);
-
-    // const chatList = await ChatUser.findAll({
-    //   where: { 
-    //     chat_id: chatIds,
-    //   user_id: { [Op.ne]: currentUserId } },
-    //   attributes: ["chat_id", "user_id"],
-    //   include: [
-    //     { 
-    //       model: User,
-    //       attributes: ["name", "email", "profile", "phone"],
-    //     },
-    //   ],
-       
-    // });
+ 
     const chatList = await Chat.findAll({
   where: { id: chatIds },
   attributes: ["id", "type"],
@@ -196,9 +183,21 @@ export const sidebarChatList = async (req, res) => {
       attributes: ["user_id", "message_text", "created_at"],
       separate: true,
       limit: 1,                       // last message
-      order: [["created_at", "DESC"]] // latest first
+      order: [["created_at", "DESC"]], // latest first
+      include:{
+        model: User,
+        attributes:["name"]
+      }
     }
-  ]
+  ],
+  
+  order: [
+  [Sequelize.literal(`(
+    SELECT MAX(created_at)
+    FROM sharing_messages
+    WHERE sharing_messages.chat_id = chat.id
+  )`), "DESC"]
+]
 });
     return res.status(200).json({
       success: true,

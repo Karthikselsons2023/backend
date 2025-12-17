@@ -14,7 +14,9 @@ ChatUser.belongsTo(User, { foreignKey: "user_id", targetKey: "user_id" });
 Chat.hasMany(ChatMessage, { foreignKey: "chat_id" });
 ChatMessage.belongsTo(Chat, { foreignKey: "chat_id" });
 
- 
+ ChatMessage.belongsTo(User, { foreignKey: "user_id", targetKey: "user_id" });
+User.hasMany(ChatMessage, { foreignKey: "user_id", sourceKey: "user_id" });
+
 // // User ↔ ChatMessage
 // User.hasMany(ChatMessage, { foreignKey: "user_id", sourceKey: "user_id" });
 // ChatMessage.belongsTo(User, { foreignKey: "user_id", targetKey: "user_id" });
