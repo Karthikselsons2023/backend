@@ -381,6 +381,7 @@ export const groupInfo = async (req, res) => {
   }
 }
 
+//Group SideBar
 export const groupsidebar = async (req, res) => {
   try{
     const { user_id } = req.query;
@@ -437,6 +438,8 @@ export const groupsidebar = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+
 
 
 

@@ -1,6 +1,7 @@
 import express from "express";
 import { openChat,getMessages,sidebarChatList,createGroupChat,getGroupMessages,sendGroupMessage,groupInfo,groupsidebar } from "../controllers/openChat.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
+import {generateUploadUrl} from "../controllers/image.js";
 
 const router = express.Router();
 
@@ -16,6 +17,9 @@ router.get("/getGroupMessages", protectRoute, getGroupMessages);
 router.post("/sendGroupMessage", protectRoute, sendGroupMessage);
 router.get("/groupInfo", groupInfo);
 router.get("/groupsidebar", protectRoute, groupsidebar);
+
+//IMAGE 
+router.post("/presigned-url",protectRoute,generateUploadUrl);
 
 
 export default router;
