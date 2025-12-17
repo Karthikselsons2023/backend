@@ -1,9 +1,9 @@
 import { Op, Sequelize } from "sequelize";
-import { Chat, ChatUser,User } from "../model/index.model.js";
+import { Chat, ChatUser,User,ChatMessage } from "../model/index.model.js";
 // import User from "../model/User.js";
-import ChatMessage from "../model/chatMessage.js";
+// import ChatMessage from "../model/chatMessage.js";
 import {getReceiverSocketId,getIo} from "../lib/socket.js";
-
+const domain=process.env.DB_DATABASE;
 //SINGLE CHAT
 export const openChat = async (req, res) => {
   try {
@@ -139,7 +139,7 @@ export const sidebarChatList = async (req, res) => {
     const { user_id } = req.query;
     const currentUserId = req.user.user_id;
    
-
+    //user_id required
     if (!user_id) {
       return res.status(400).json({ message: "user_id required" });
     }
@@ -161,23 +161,35 @@ export const sidebarChatList = async (req, res) => {
       ],
     });
    
-    
-
     const chatIds = chats.map((chat) => chat.chat_id);
-//  return res.status(200).json({ chatIds });
-    const chatList = await ChatUser.findAll({
-      where: { 
-        chat_id: chatIds,
-      user_id: { [Op.ne]: currentUserId } },
-      attributes: ["chat_id", "user_id"],
+
+   const chatList = await ChatUser.findAll({
+  where: { 
+    chat_id: chatIds,
+    user_id: { [Op.ne]: currentUserId }
+  },
+  attributes: ["chat_id", "user_id"],
+  include: [
+    {
+      model: User,
+      attributes: ["name", "email", "profile", "phone"]
+    },
+    {
+      model: Chat,                   // include Chat to access messages
+      attributes: [],
       include: [
-        { 
-          model: User,
-          attributes: ["name", "email", "profile", "phone"],
-        },
-      ],
-       
-    });
+        {
+          model: ChatMessage,
+          attributes: ["message_text", "created_at"],
+          separate: true,
+          limit: 1,
+          order: [["created_at", "DESC"]]
+        }
+      ]
+    }
+  ]
+});
+
     
     return res.status(200).json({
       success: true,
@@ -357,6 +369,45 @@ export const groupInfo = async (req, res) => {
 }
   catch(err){
     console.error("groupInfo error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export const groupsidebar = async (req, res) => {
+  try{
+    const { user_id } = req.query;
+     
+    // user required
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id required" });
+    }
+
+    // validate User
+    const user = await User.findOne({ where: { user_id: user_id } });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const chatUser = await ChatUser.findAll({
+      where: { user_id },
+      attributes: ["chat_id"], 
+  });
+   
+    const chatIds = chatUser.map((chat) => chat.chat_id);
+
+    const groupChatList = await Chat.findAll({
+      where: { 
+        type: "group",
+      },
+      attributes: [ "name", "image_url", "descritpion"],
+    });
+    return res.status(200).json({
+      success: true,
+      groupChatList,  
+    });
+}
+  catch(err){
+    console.error("groupsidebar error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 }
