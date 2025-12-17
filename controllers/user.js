@@ -4,7 +4,7 @@ import User from "../model/User.js";
 
 
 export const users=async(req,res)=>{
-    const baseurl = "http://selsons.com/";
+     
 
      
     const users = await User.findAll({
@@ -12,11 +12,6 @@ export const users=async(req,res)=>{
         attributes: { exclude: ['password'] }
     });
 
-    const mapUser = users.map(user=>({
-        ...user.toJSON(),
-        profile: user.profile ? baseurl + user.profile : null
     
-
-    }));
-    res.json(mapUser);
+    res.json(users);
 }

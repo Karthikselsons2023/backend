@@ -3,7 +3,7 @@ import { Chat, ChatUser,User,ChatMessage } from "../model/index.model.js";
 // import User from "../model/User.js";
 // import ChatMessage from "../model/chatMessage.js";
 import {getReceiverSocketId,getIo} from "../lib/socket.js";
-const domain=process.env.DB_DATABASE;
+
 //SINGLE CHAT
 export const openChat = async (req, res) => {
   try {
@@ -163,33 +163,30 @@ export const sidebarChatList = async (req, res) => {
    
     const chatIds = chats.map((chat) => chat.chat_id);
 
-   const chatList = await ChatUser.findAll({
-  where: { 
-    chat_id: chatIds,
-    user_id: { [Op.ne]: currentUserId }
-  },
-  attributes: ["chat_id", "user_id"],
+   const chatList = await Chat.findAll({
+  where: { id: chatIds },
+  attributes: ["id", "type", "name"],
   include: [
     {
-      model: User,
-      attributes: ["name", "email", "profile", "phone"]
-    },
-    {
-      model: Chat,                   // include Chat to access messages
-      attributes: [],
+      model: ChatUser,
+      where: { user_id: { [Op.ne]: currentUserId } },
+      attributes: ["user_id", "role", "group_admin"],
       include: [
         {
-          model: ChatMessage,
-          attributes: ["message_text", "created_at"],
-          separate: true,
-          limit: 1,
-          order: [["created_at", "DESC"]]
+          model: User,
+          attributes: ["name", "profile", "email", "phone"]
         }
       ]
+    },
+    {
+      model: ChatMessage,
+      attributes: ["user_id", "message_text", "created_at"],
+      separate: true,
+      limit: 1,                       // last message
+      order: [["created_at", "DESC"]] // latest first
     }
   ]
 });
-
     
     return res.status(200).json({
       success: true,
