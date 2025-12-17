@@ -439,6 +439,40 @@ export const groupsidebar = async (req, res) => {
   }
 }
 
+//group make admin
+export const groupmakeadmin = async(res,req)=>{
+  const {auth_id,user_id,chat_id}= req.body
+  try {
+  if (!auth_id || !user_id || !chat_id) {
+    return res.status(400).json({ message: "auth_id, user_id, and chat_id are required" });
+  }
+
+  // Check if auth_user is group admin
+  const authUser = await ChatUser.findOne({
+    where: { chat_id, user_id: auth_id, role: "group_admin" }
+  });
+
+  if (!authUser) {
+    return res.status(403).json({ message: "Only group admin can make members admin" });
+  }
+
+  // Update user role to admin
+  await ChatUser.update(
+    { role: "group_admin", group_admin: true },
+    { where: { chat_id, user_id } }
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "User promoted to group admin"
+  });
+} catch (err) {
+  console.error("groupmakeadmin error:", err);
+  res.status(500).json({ message: "Internal server error" });
+}
+}
+
+ 
 
 
 
