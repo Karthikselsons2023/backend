@@ -68,6 +68,8 @@ const socketPayload = {
   user_id: sender_id,
   receiver_id,
   message_text,
+   file_type,
+      file_url,
   created_at: chatMessage.created_at,
 };
 
@@ -117,7 +119,7 @@ const { sender_id, receiver_id } = req.query;
 
     const messages = await ChatMessage.findAll({
       where: { chat_id },
-      attributes: ["user_id", "message_text", "created_at"],
+      attributes: ["user_id", "message_text", "created_at","file_url","file_type"],
       order: [["created_at", "ASC"]],
     });
  
@@ -449,6 +451,7 @@ export const groupmakeadmin = async(res,req)=>{
     return res.status(400).json({ message: "auth_id, user_id, and chat_id are required" });
   }
 
+
   // Check if auth_user is group admin
   const authUser = await ChatUser.findOne({
     where: { chat_id, user_id: auth_id, role: "group_admin" }
@@ -474,7 +477,9 @@ export const groupmakeadmin = async(res,req)=>{
 }
 }
 
- 
+ const check_admin = async(res,req)=>{
+  
+ }
 
 
 
