@@ -3,7 +3,7 @@ import { Chat, ChatUser,User } from "../model/index.model.js";
 // import User from "../model/User.js";
 import ChatMessage from "../model/chatMessage.js";
 import {getReceiverSocketId,getIo} from "../lib/socket.js";
-
+import {getPresignedUrl} from "../lib/aws.js"
 //SINGLE CHAT
 export const openChat = async (req, res) => {
   try {
@@ -122,13 +122,27 @@ const { sender_id, receiver_id } = req.query;
       attributes: ["user_id", "message_text", "created_at","file_url","file_type"],
       order: [["created_at", "ASC"]],
     });
- 
+
+    const formattedMessages = await Promise.all(
+    messages.map(async (msg) => {
+    const data = msg.toJSON();
+
+    if (data.file_url && data.file_type?.startsWith("image")) {
+      data.preview_url = await getPresignedUrl(data.file_url);
+    }
+    else{
+      data.file_url="nnnn";
+    }
+
+    return data;
+  })
+);
 
     
 
     return res.status(200).json({
       success: true,
-      messages 
+      formattedMessages 
     });
 
   }
