@@ -57,9 +57,12 @@ export const openChat = async (req, res) => {
       file_url
     });
 
-    if (file_url ) {
-      file_url = await getPresignedUrl(file_url);
-    }
+    let preview_url = null;
+
+if (file_url) {
+  preview_url = await getPresignedUrl(file_url);
+}
+ 
     
 
     // socket emit
@@ -75,6 +78,7 @@ const socketPayload = {
   message_text,
    file_type,
       file_url,
+      preview_url,
   created_at: chatMessage.created_at,
 };
 
@@ -90,6 +94,7 @@ if (senderSocketId) {
     return res.status(201).json({
       success: true,
       message: chatMessage,
+       
     });
   } catch (err) {
     console.error("openChat error:", err);
