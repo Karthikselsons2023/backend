@@ -21,7 +21,7 @@ export const getPresignedUploadUrl = async ({
 
   return {
     uploadUrl,
-    // fileUrl: `${key}`
-    fileUrl: `https://${Aws_Bucket}.s3.amazonaws.com/${key}`
+    fileUrl: `${key}`
+    // fileUrl: `https://${Aws_Bucket}.s3.amazonaws.com/${key}`
   };
 };

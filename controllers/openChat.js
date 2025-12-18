@@ -127,13 +127,10 @@ const { sender_id, receiver_id } = req.query;
     messages.map(async (msg) => {
     const data = msg.toJSON();
 
-    if (data.file_url && data.file_type?.startsWith("image")) {
-      data.preview_url = await getPresignedUrl(data.file_url);
+    if (data.file_url ) {
+      data.file_url = await getPresignedUrl(data.file_url);
     }
-    else{
-      data.file_url="nnnn";
-    }
-
+    
     return data;
   })
 );
