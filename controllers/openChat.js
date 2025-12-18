@@ -7,8 +7,8 @@ import {getPresignedUrl} from "../lib/aws.js"
 //SINGLE CHAT
 export const openChat = async (req, res) => {
   try {
-    console.log("REQ BODY:", req.body);
-    const { sender_id, receiver_id, message_text,file_type,file_url } = req.body;
+   
+    var { sender_id, receiver_id, message_text,file_type,file_url } = req.body;
 
     if (!sender_id || !receiver_id ) {
       return res.status(400).json({
@@ -49,7 +49,7 @@ export const openChat = async (req, res) => {
     }
 
     // save message
-    const chatMessage = await ChatMessage.create({
+    var chatMessage = await ChatMessage.create({
       chat_id: chat.id,
       user_id: sender_id,
       message_text,
@@ -57,10 +57,10 @@ export const openChat = async (req, res) => {
       file_url
     });
 
-    let preview_url = null;
+    
 
 if (file_url) {
-  preview_url = await getPresignedUrl(file_url);
+  file_url = await getPresignedUrl(file_url);
 }
  
     
@@ -72,13 +72,13 @@ const receiverSocketId = getReceiverSocketId(receiver_id);
     const io = getIo();
     console.log(senderSocketId, receiverSocketId)
 
-const socketPayload = {
+var socketPayload = {
   user_id: sender_id,
   receiver_id,
   message_text,
    file_type,
       file_url,
-      preview_url,
+     
   created_at: chatMessage.created_at,
 };
 
@@ -94,6 +94,7 @@ if (senderSocketId) {
     return res.status(201).json({
       success: true,
       message: chatMessage,
+      
        
     });
   } catch (err) {
