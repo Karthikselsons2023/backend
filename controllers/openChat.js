@@ -27,6 +27,7 @@ export const openChat = async (req, res) => {
       attributes: ["chat_id"],
       where: {
         user_id: { [Op.in]: [sender_id, receiver_id] },
+        role:"member",
       },
       group: ["chat_id"],
       having: Sequelize.literal("COUNT(DISTINCT user_id) = 2"),
