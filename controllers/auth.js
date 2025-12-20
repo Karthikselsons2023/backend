@@ -38,9 +38,9 @@ export const login = async (req, res) => {
     if (!isPasswordCorrect) {
       return res.status(400).json({ message: "Invalid Password" });
     }
-    if(user.profile){
-        user.profile = "http://selsons.com/" + user.profile;
-    }
+    // if(user.profile){
+    //     user.profile = "http://selsons.com/" + user.profile;
+    // }
 
     generateToken(user.user_id, res);
     // SUCCESS RESPONSE
