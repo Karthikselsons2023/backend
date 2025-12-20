@@ -316,6 +316,15 @@ export const getGroupMessages = async (req, res) => {
       where: { chat_id: chatId },
       attributes: ["user_id", "message_text", "file_url","file_type","created_at","chat_id"],
       order: [["created_at", "ASC"]],
+      include:[
+        {
+           model:User,
+           attributes:['name','profile']  
+        }
+       
+
+      ]
+      
     });
     
     return res.status(200).json({
