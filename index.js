@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.1.16:5173"],
+  origin: ["http://localhost:5173", "http://192.168.1.18:5173","https://sunfood.world/"],
   credentials: true
 }));
 
@@ -48,7 +48,8 @@ db2.authenticate()
 // socket init
 const { server } = initSocket(app);
 
-// start server
-server.listen(PORT, () => {
+ 
+ // start server (ONLY THIS)
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on PORT: ${PORT}`);
 });

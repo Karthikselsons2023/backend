@@ -121,12 +121,13 @@ const { sender_id, receiver_id } = req.query;
       attributes: ["chat_id"],
       where: {
         user_id: { [Op.in]: [sender_id, receiver_id] },
+         role:"member",
       },
       group: ["chat_id"],
       having: Sequelize.literal("COUNT(DISTINCT user_id) = 2"),
     }).then(rows=>rows.length>0?rows[0].chat_id:null);
 
-    // return res.status(200).json({ chat_id });
+     return res.status(200).json({ chat_id });
 
     const messages = await ChatMessage.findAll({
       where: { chat_id },
