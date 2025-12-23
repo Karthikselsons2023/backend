@@ -1,5 +1,5 @@
 import express from "express";
-import { openChat,getMessages,sidebarChatList,createGroupChat,getGroupMessages,sendGroupMessage,groupInfo,groupsidebar,groupmakeadmin } from "../controllers/openChat.js";
+import { openChat,getMessages,sidebarChatList,createGroupChat,getGroupMessages,sendGroupMessage,groupInfo,groupsidebar,groupmakeadmin ,groupaddpeople} from "../controllers/openChat.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import {generateUploadUrl,updateimg} from "../controllers/image.js";
 
@@ -17,6 +17,7 @@ router.post("/sendGroupMessage", protectRoute, sendGroupMessage);
 router.get("/groupInfo", groupInfo);
 router.get("/groupsidebar", protectRoute, groupsidebar);
 router.post("/groupmakeadmin", protectRoute, groupmakeadmin);
+router.post("/groupaddpeople", protectRoute, groupaddpeople);
 
 //IMAGE 
 router.post("/presigned-url",protectRoute,generateUploadUrl);

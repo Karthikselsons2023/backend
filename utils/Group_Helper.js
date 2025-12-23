@@ -6,7 +6,7 @@ import {Chat,ChatUser,ChatMessage} from "../model/index.model.js"
 
 //Check amdin 
 export const check_admin = async(user_id,chat_id)=>{
-    console.log(user_id,chat_id)
+    
 
 const check_group = await Chat.findAll({
     where:{ id:chat_id,type:"group"}
@@ -55,9 +55,12 @@ export const check_group_member = async(user_id,chat_id)=>{
 }
 
 export const check_user = async(user_id)=>{
+    console.log(user_id);
     const user_check = await ChatUser.findAll({
         where:{user_id}
     });
+
+    console.log(user_check);
 
     if(!user_check)
     {

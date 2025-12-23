@@ -562,7 +562,7 @@ export const groupaddpeople = async(req,res)=>{
   if(!user_check){ return res.status(400).json({message:"User not in the User List"})}
   if(group_member){ return res.status(400).json({message:"User allready in the Group"})}
   if(!group){ return res.status(400).json({message:"This is Private Chat"})}
-  if(!exists){ return res.status(400).json({message:"User not in the Chat"})}
+  if(!exists){ return res.status(400).json({message:"authUser not in the Chat"})}
   if(!isAdmin){ return res.status(400).json({message:"only Admin Can perform"})}
   
  
