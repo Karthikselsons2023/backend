@@ -3,7 +3,7 @@ import { Chat, ChatUser,User } from "../model/index.model.js";
 import ChatMessage from "../model/chatMessage.js";
 import {getReceiverSocketId,getIo} from "../lib/socket.js";
 import {getPresignedUrl} from "../lib/aws.js";
-import {check_admin,check_group_member,check_user} from "../utils/Group_Helper.js";
+import {check_admin,check_group_member,check_user,group_member_check} from "../utils/Group_Helper.js";
 //SINGLE CHAT
 export const openChat = async (req, res) => {
   try {
@@ -302,7 +302,6 @@ export const createGroupChat = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 //Fetch Messages for Group Chat
 export const getGroupMessages = async (req, res) => {
   try{
@@ -351,7 +350,6 @@ export const getGroupMessages = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 //send message to Group Chat 
 export const sendGroupMessage = async (req, res) => {
   try{
@@ -419,7 +417,6 @@ io.to(String(chat_id)).emit("newGroupMessage", socketPayload);
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
 export const groupInfo = async (req, res) => {
   try{
     const {chatId} = req.query;
@@ -429,13 +426,14 @@ export const groupInfo = async (req, res) => {
     }
 
     const groupInfo = await Chat.findOne({
-      where: { id: chatId },
+      where: { id: chatId  },
       attributes: [
         ["id","chat_id"] , ["name","group_name"], ["image_url","group_image"], ["descritpion","group_description"]],
       include: [
         {
         model: ChatUser,
         attributes: ["user_id", "role","group_admin","group_status"],  
+        where:{group_status:false},
         include: [
           {
             model: User,  
@@ -456,29 +454,26 @@ export const groupInfo = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
 //Group SideBar
 export const groupsidebar = async (req, res) => {
   try{
     const { user_id } = req.query;
      
     // user required
-    if (!user_id) {
-      return res.status(400).json({ message: "user_id required" });
-    }
+    if (!user_id) { return res.status(400).json({ message: "user_id required" });  }
 
     // validate User
     const user = await User.findOne({ where: { user_id: user_id } });
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
+    if (!user) { return res.status(400).json({ message: "User not found" }); }
 
     const chatUser = await ChatUser.findAll({
-      where: { user_id },
+      where: { user_id , group_status:false , role:{ [Op.in]: ["group_member","group_admin"] } },
       attributes: ["chat_id"], 
   });
    
+
     const chatIds = chatUser.map((chat) => chat.chat_id);
+    // return res.status(200).json({ chatIds });
 
     const groupChatList = await Chat.findAll({
       where: { 
@@ -500,7 +495,7 @@ export const groupsidebar = async (req, res) => {
   [Sequelize.literal(`(
     SELECT MAX(created_at)
     FROM sharing_messages
-    WHERE sharing_messages.chat_id = chat.id
+    WHERE sharing_messages.chat_id = chat.id 
   )`), "DESC"]
 ]
     });
@@ -514,36 +509,6 @@ export const groupsidebar = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
-//group make admin
-export const groupmakeadmin = async(req,res)=>{
-
-  const {auth_id,user_id,chat_id}= req.body
-  try {
-  if (!auth_id || !user_id || !chat_id) {
-    return res.status(400).json({ message: "auth_id, user_id, and chat_id are required" });
-  }
-
-  //check auth is there in the groud and is admin
-  const {exists , isAdmin,group } = await check_admin(auth_id,chat_id);
-   //check the add user is ther in the group
-  const { group_member } = await check_group_member(user_id,chat_id);
-   
-  if(!group_member){ return res.status(400).json({message:"User not in the Group"})}
-  if(!group){ return res.status(400).json({message:"This is Private Chat"})}
-  if(!exists){ return res.status(400).json({message:"User not in the Chat"})}
-  if(!isAdmin){ return res.status(400).json({message:"only Admin Can perform"})}
-  return res.status(200).json({message:"group_admin_checked"});
- 
-  
-}
-catch(err)
-{
-  console.log("error message",err)
-  res.status(500).json({message:"Internal Server Error"})
-}
-}
-
 //add people to group 
 export const groupaddpeople = async (req, res) => {
   const { auth_id, user_id, chat_id } = req.body;
@@ -601,9 +566,135 @@ await Promise.all(user_id.map((uId) =>
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+//group make admin
+export const groupmakeadmin = async(req,res)=>{
 
+  const {auth_id,user_id,chat_id}= req.body
+  try {
+  if (!auth_id || !user_id || !chat_id) {
+    return res.status(400).json({ message: "auth_id, user_id, and chat_id are required" });
+  }
+
+  //check auth is there in the groud and is admin
+  const {exists , isAdmin,group } = await check_admin(auth_id,chat_id);
+  if(!group){ return res.status(400).json({message:"This is Private Chat"})}
+  if(!exists){ return res.status(400).json({message:"User not in the Chat"})}
+  if(!isAdmin){ return res.status(400).json({message:"only Admin Can perform"})}
+   //check the add user is ther in the group
+  const { group_member,alreadyAdmin } = await group_member_check(user_id,chat_id);
+   
+  if(!group_member){ return res.status(400).json({message:"User not in the Group"})}
+  if(alreadyAdmin){ return res.status(400).json({message:"User is already Admin"})}
+
+  //make admin
+  await ChatUser.update({
+    role:"group_admin",
+    group_admin:true
+  },
+  {
+    where: { user_id, chat_id }
+  });
+
+  return res.status(200).json({message:"Changed to Admin Successfully"});
+ 
   
+}
+catch(err)
+{
+  console.log("error message",err)
+  res.status(500).json({message:"Internal Server Error"})
+}
+}
+//Remove Group admin
+export const removeadmin = async(req,res)=>{
 
+  const {auth_id,user_id,chat_id}= req.body
+  try {
+  if (!auth_id || !user_id || !chat_id) {
+    return res.status(400).json({ message: "auth_id, user_id, and chat_id are required" });
+  }
+
+  //check auth is there in the groud and is admin
+  const {exists , isAdmin,group } = await check_admin(auth_id,chat_id);
+  if(!group){ return res.status(400).json({message:"This is Private Chat"})}
+  if(!exists){ return res.status(400).json({message:"User not in the Chat"})}
+  if(!isAdmin){ return res.status(400).json({message:"only Admin Can perform"})}
+   
+  //check the add user is ther in the group
+  const { group_member,alreadyAdmin } = await group_member_check(user_id,chat_id);
+  if(!group_member){ return res.status(400).json({message:"User not in the Group"})}
+  if(!alreadyAdmin){ return res.status(400).json({message:"User is Not Admin"})}
+
+  //group creator can't remove admin
+  const chat = await Chat.findByPk(chat_id);
+  if(chat.created_by == user_id){
+    return res.status(400).json({message:"Group Creator can't be removed from Admin"})
+  }
+
+  //make admin
+  await ChatUser.update({
+    role:"group_member",
+    group_admin:false
+  },
+  {
+    where: { user_id, chat_id }
+  });
+
+  return res.status(200).json({message:"Removed From Admin Successfully"});
+ 
+  
+}
+catch(err)
+{
+  console.log("error message",err)
+  res.status(500).json({message:"Internal Server Error"})
+}
+}
+//Remove Group Participate 
+export const removegroupmember = async(req,res)=>{
+  const {auth_id,user_id,chat_id}= req.body
+  try{
+     if (!auth_id || !user_id || !chat_id) {
+    return res.status(400).json({ message: "auth_id, user_id, and chat_id are required" });
+  }
+
+  //check auth is there in the groud and is admin
+  const {exists, isAdmin, group } = await check_admin(auth_id,chat_id);
+  if(!group){ return res.status(400).json({message:"This is Private Chat"})}
+  if(!exists){ return res.status(400).json({message:"User not in the Chat"})}
+  if(!isAdmin){ return res.status(400).json({message:"only Admin Can perform"})}
+   
+  //check the add user is ther in the group
+  const { group_member,alreadyAdmin } = await group_member_check(user_id,chat_id);
+  if(!group_member){ return res.status(400).json({message:"User not in the Group"})}
+  // if(!alreadyAdmin){ return res.status(400).json({message:"User is Not Admin"})}
+
+  //group creator can't remove admin
+  const chat = await Chat.findByPk(chat_id);
+  if(chat.created_by == user_id){
+    return res.status(400).json({message:"Group Creator can't be removed from Admin"})
+  }
+
+  //remove admin
+  await ChatUser.update({
+    role:"group_member",
+    group_admin:false,
+    group_status:true
+    
+  },
+  {
+    where: { user_id, chat_id }
+  });
+
+  return res.status(200).json({message:"Removed From Group Successfully"});
+ 
+
+  }
+  catch(err){
+    console.log("error message",err)
+    res.status(500).json({message:"Internal Server Error"})
+  }
+}
 
 
 

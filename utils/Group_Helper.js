@@ -70,3 +70,21 @@ export const check_user = async(user_ids)=>{
     allExist: users.length === user_ids.length
   };
 };
+
+export const group_member_check = async(user_id,chat_id)=>{
+    console.log("Checking group member:", user_id, chat_id);
+
+    const member = await ChatUser.findOne({
+        where: { user_id, chat_id }
+    });
+
+    const alreadyAdmin = member ? member.group_admin == 1 : false;
+
+    console.log("Member found:", member);
+    console.log("Is already admin:", alreadyAdmin);
+
+    if (!member) {
+        return { group_member: false, alreadyAdmin: false };
+    }
+    return { group_member: true, alreadyAdmin };
+}
