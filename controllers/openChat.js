@@ -466,39 +466,87 @@ export const groupsidebar = async (req, res) => {
     const user = await User.findOne({ where: { user_id: user_id } });
     if (!user) { return res.status(400).json({ message: "User not found" }); }
 
-    const chatUser = await ChatUser.findAll({
-      where: { user_id , group_status:false , role:{ [Op.in]: ["group_member","group_admin"] } },
-      attributes: ["chat_id"], 
-  });
+  //   const chatUser = await ChatUser.findAll({
+  //     where: { user_id , group_status:false , role:{ [Op.in]: ["group_member","group_admin"] } },
+  //     attributes: ["chat_id"], 
+  // });
    
 
-    const chatIds = chatUser.map((chat) => chat.chat_id);
+  //   const chatIds = chatUser.map((chat) => chat.chat_id);
     // return res.status(200).json({ chatIds });
 
-    const groupChatList = await Chat.findAll({
-      where: { 
-        type: "group",
+//     const groupChatList = await Chat.findAll({
+//       where: { 
+//         type: "group",
+//       },
+//       attributes: [ "name", "image_url", "descritpion"],
+      
+//       include:{
+//           model:ChatMessage,
+//           attributes: ["user_id", "message_text", "created_at"],
+//       separate: true,
+//       limit: 1,                       // last message
+//       order: [["created_at", "DESC"]], // latest first
+//       include:{
+//         model: User,
+//         attributes:["name"]
+//       }
+//       },
+//       order: [
+//   [Sequelize.literal(`(
+//     SELECT MAX(created_at)
+//     FROM sharing_messages
+//     WHERE sharing_messages.chat_id = chat.id 
+//   )`), "DESC"]
+// ]
+//     });
+
+const groupChatList = await Chat.findAll({
+  where: {
+    type: "group"
+  },
+
+  attributes: ["id", "name", "image_url", "descritpion"],
+
+  include: [
+    // 🔹 JOIN: ChatUser (membership filter)
+    {
+      model: ChatUser,
+      where: {
+        user_id: user_id,     // 👈 current user
+        group_status: 0       // 👈 ONLY active groups
       },
-      attributes: [ "name", "image_url", "descritpion"],
-      include:{
-          model:ChatMessage,
-          attributes: ["user_id", "message_text", "created_at"],
+      attributes: [],         // don’t return join table data
+    },
+
+    // 🔹 LAST MESSAGE
+    {
+      model: ChatMessage,
+      attributes: ["user_id", "message_text", "created_at"],
       separate: true,
-      limit: 1,                       // last message
-      order: [["created_at", "DESC"]], // latest first
-      include:{
-        model: User,
-        attributes:["name"]
-      }
-      },
-      order: [
-  [Sequelize.literal(`(
-    SELECT MAX(created_at)
-    FROM sharing_messages
-    WHERE sharing_messages.chat_id = chat.id 
-  )`), "DESC"]
-]
-    });
+      limit: 1,
+      order: [["created_at", "DESC"]],
+      include: [
+        {
+          model: User,
+          attributes: ["name"]
+        }
+      ]
+    }
+  ],
+
+  order: [
+    [
+      Sequelize.literal(`(
+        SELECT MAX(created_at)
+        FROM sharing_messages
+        WHERE sharing_messages.chat_id = chat.id
+      )`),
+      "DESC"
+    ]
+  ]
+});
+
     return res.status(200).json({
       success: true,
       groupChatList,  
