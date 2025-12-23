@@ -3,7 +3,7 @@ import { Chat, ChatUser,User } from "../model/index.model.js";
 import ChatMessage from "../model/chatMessage.js";
 import {getReceiverSocketId,getIo} from "../lib/socket.js";
 import {getPresignedUrl} from "../lib/aws.js";
-import {check_admin,check_group_member} from "../utils/Group_Helper.js";
+import {check_admin,check_group_member,check_user} from "../utils/Group_Helper.js";
 //SINGLE CHAT
 export const openChat = async (req, res) => {
   try {
@@ -355,7 +355,7 @@ export const getGroupMessages = async (req, res) => {
 //send message to Group Chat 
 export const sendGroupMessage = async (req, res) => {
   try{
-    var { chat_id, user_id, message_text,file_url,file_type } = req.body;
+    var { chat_id, user_id, message_text,file_url,file_type,name,profile } = req.body;
    
     if (!chat_id || !user_id ) {
       return res.status(400).json({
@@ -397,13 +397,17 @@ const socketPayload = {
   file_type,
   file_url,
   created_at: sendMessage.created_at,
+  user:{
+    name,
+    profile
+  }
 };
 
 // emit to ALL users in the group (room)
 io.to(chat_id).emit("newGroupMessage", socketPayload);
     return res.status(201).json({
       success: true,
-      message: sendMessage
+      formattedMessages: socketPayload,
     });
     
    
@@ -519,22 +523,48 @@ export const groupmakeadmin = async(req,res)=>{
     return res.status(400).json({ message: "auth_id, user_id, and chat_id are required" });
   }
 
+  //check auth is there in the groud and is admin
   const {exists , isAdmin,group } = await check_admin(auth_id,chat_id);
-  console.log("isAdmin",isAdmin)
-  const {group_member} = await check_group_member(user_id,chat_id);
-  console.log("group_member",group_member)
-if(!group){
-   return res.status(400).json({message:"This is Private Chat"})
+   //check the add user is ther in the group
+  const { group_member } = await check_group_member(user_id,chat_id);
+   
+  if(!group_member){ return res.status(400).json({message:"User not in the Group"})}
+  if(!group){ return res.status(400).json({message:"This is Private Chat"})}
+  if(!exists){ return res.status(400).json({message:"User not in the Chat"})}
+  if(!isAdmin){ return res.status(400).json({message:"only Admin Can perform"})}
+  return res.status(200).json({message:"group_admin_checked"});
+ 
+  
+}
+catch(err)
+{
+  console.log("error message",err)
+  res.status(500).json({message:"Internal Server Error"})
+}
 }
 
-  if(!exists){
-    return res.status(400).json({message:"User not in the Chat"})
+//add people to group 
+export const groupaddpeople = async(req,res)=>{
+
+  const {auth_id,user_id,chat_id}= req.body
+  try {
+  if (!auth_id || !user_id || !chat_id) {
+    return res.status(400).json({ message: "auth_id, user_id, and chat_id are required" });
   }
 
-  if(!isAdmin){
-    return res.status(400).json({message:"only Admin Can perform"})
-  }
-return res.status(200).json({message:"group_admin_checked"});
+  //check auth is there in the groud and is admin
+  const {exists , isAdmin,group } = await check_admin(auth_id,chat_id);
+  //check the user in the userlis
+  const {user_check} = await check_user(user_id);
+   //check the add user is ther in the group
+  const { group_member } = await check_group_member(user_id,chat_id);
+   
+  if(!user_check){ return res.status(400).json({message:"User not in the User List"})}
+  if(group_member){ return res.status(400).json({message:"User allready in the Group"})}
+  if(!group){ return res.status(400).json({message:"This is Private Chat"})}
+  if(!exists){ return res.status(400).json({message:"User not in the Chat"})}
+  if(!isAdmin){ return res.status(400).json({message:"only Admin Can perform"})}
+  
  
   
 }
