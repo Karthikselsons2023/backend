@@ -306,13 +306,13 @@ export const createGroupChat = async (req, res) => {
 //Fetch Messages for Group Chat
 export const getGroupMessages = async (req, res) => {
   try{
-    const {chatId} = req.query;
+    var {chatId} = req.query;
 
     if(!chatId){
       return res.status(400).json({ message: "chatId is required" });
     }
 
-    const message_text = await ChatMessage.findAll({
+    var message_text = await ChatMessage.findAll({
       where: { chat_id: chatId },
       attributes: ["user_id", "message_text", "file_url","file_type","created_at","chat_id"],
       order: [["created_at", "ASC"]],
@@ -326,10 +326,24 @@ export const getGroupMessages = async (req, res) => {
       ]
       
     });
+
+    const formattedMessages = await Promise.all(
+    message_text.map(async (msg) => {
+    const data = msg.toJSON();
+
+    if (data.file_url ) {
+      data.file_url = await getPresignedUrl(data.file_url);
+    }
+    
+    
+    return data;
+  })
+);
+
     
     return res.status(200).json({
       success: true,
-      message_text 
+      formattedMessages 
     });
   }
   catch(err){
