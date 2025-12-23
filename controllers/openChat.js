@@ -341,7 +341,7 @@ export const getGroupMessages = async (req, res) => {
 //send message to Group Chat 
 export const sendGroupMessage = async (req, res) => {
   try{
-    const { chat_id, user_id, message_text,file_url,file_type } = req.body;
+    var { chat_id, user_id, message_text,file_url,file_type } = req.body;
    
     if (!chat_id || !user_id ) {
       return res.status(400).json({
@@ -371,6 +371,9 @@ export const sendGroupMessage = async (req, res) => {
     // Socket Emit to Group Members
 
     const io = getIo();
+ if (file_url) {
+  file_url = await getPresignedUrl(file_url);
+}
   
 
 const socketPayload = {
@@ -379,7 +382,7 @@ const socketPayload = {
   message_text,
   file_type,
   file_url,
-  created_at: chatMessage.created_at,
+  created_at: sendMessage.created_at,
 };
 
 // emit to ALL users in the group (room)
