@@ -343,7 +343,7 @@ export const sendGroupMessage = async (req, res) => {
   try{
     const { chat_id, user_id, message_text,file_url,file_type } = req.body;
    
-    if (!chat_id || !user_id || !message_text) {
+    if (!chat_id || !user_id ) {
       return res.status(400).json({
         message: "chat_id, user_id and message_text are required",
       });
