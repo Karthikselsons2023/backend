@@ -3,7 +3,7 @@ import { Chat, ChatUser,User } from "../model/index.model.js";
 import ChatMessage from "../model/chatMessage.js";
 import {getReceiverSocketId,getIo} from "../lib/socket.js";
 import {getPresignedUrl} from "../lib/aws.js";
-import {check_admin} from "../utils/Group_Helper.js";
+import {check_admin,check_group_member} from "../utils/Group_Helper.js";
 //SINGLE CHAT
 export const openChat = async (req, res) => {
   try {
@@ -392,7 +392,7 @@ export const sendGroupMessage = async (req, res) => {
 
 const socketPayload = {
   chat_id,              // 👈 REQUIRED
-  sender_id,
+  user_id,
   message_text,
   file_type,
   file_url,
@@ -520,7 +520,9 @@ export const groupmakeadmin = async(req,res)=>{
   }
 
   const {exists , isAdmin,group } = await check_admin(auth_id,chat_id);
-  console.log(isAdmin)
+  console.log("isAdmin",isAdmin)
+  const {group_member} = await check_group_member(user_id,chat_id);
+  console.log("group_member",group_member)
 if(!group){
    return res.status(400).json({message:"This is Private Chat"})
 }
@@ -532,8 +534,8 @@ if(!group){
   if(!isAdmin){
     return res.status(400).json({message:"only Admin Can perform"})
   }
-return 
-return auth_id;
+return res.status(200).json({message:"group_admin_checked"});
+ 
   
 }
 catch(err)

@@ -1,5 +1,6 @@
 import express from "express";
 import {Chat,ChatUser,ChatMessage} from "../model/index.model.js"
+// import { use } from "react";
 // import Chat from "../model/chat.model.js"
 // import ChatUser from "../model/chatUser.model.js";
 
@@ -38,4 +39,16 @@ return{
 }
 
 
+}
+
+export const check_group_member = async(user_id,chat_id)=>{
+    const member_check = await ChatUser.findOne({
+        where:{user_id,chat_id}
+    });
+
+    if(!member_check)
+    {
+        return false;
+    }
+    return true;
 }
