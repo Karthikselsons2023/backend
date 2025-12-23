@@ -545,36 +545,63 @@ catch(err)
 }
 
 //add people to group 
-export const groupaddpeople = async(req,res)=>{
+export const groupaddpeople = async (req, res) => {
+  const { auth_id, user_id, chat_id } = req.body;
 
-  const {auth_id,user_id,chat_id}= req.body
   try {
-  if (!auth_id || !user_id || !chat_id) {
-    return res.status(400).json({ message: "auth_id, user_id, and chat_id are required" });
-  }
+    if (!auth_id || !chat_id || !Array.isArray(user_id)) {
+      return res.status(400).json({ message: "Invalid input" });
+    }
 
-  //check auth is there in the groud and is admin
-  const {exists , isAdmin,group } = await check_admin(auth_id,chat_id);
-  //check the user in the userlis
-  const {user_check} = await check_user(user_id);
-   //check the add user is ther in the group
-  const { group_member } = await check_group_member(user_id,chat_id);
-   console.log("user_exists",user_check);
-  if(!user_check){ return res.status(400).json({message:"User not in the User List"})}
-  if(group_member){ return res.status(400).json({message:"User allready in the Group"})}
-  if(!group){ return res.status(400).json({message:"This is Private Chat"})}
-  if(!exists){ return res.status(400).json({message:"authUser not in the Chat"})}
-  if(!isAdmin){ return res.status(400).json({message:"only Admin Can perform"})}
-  
+    // Admin & group check
+    const { exists, isAdmin, group } = await check_admin(auth_id, chat_id);
+    if (!group) return res.status(400).json({ message: "This is Private Chat" });
+    if (!exists) return res.status(400).json({ message: "Auth user not in chat" });
+    if (!isAdmin) return res.status(400).json({ message: "Only admin can perform" });
+
+    // Check users exist
+    const { users, allExist } = await check_user(user_id);
+     
+    if (!allExist) {
+      return res.status(400).json({
+        message: "Some users do not exist",
+      });
+    }
+
+    // Check already in group
+    const { members } = await check_group_member(user_id, chat_id);
+    if (members.length > 0) {
+      return res.status(400).json({
+        message: "Some users already in group",
+        alreadyMembers: members.map(m => m.user_id)
+      });
+    }
+
+    console.log("Users to be added:", user_id);
+
+     
  
-  
-}
-catch(err)
-{
-  console.log("error message",err)
-  res.status(500).json({message:"Internal Server Error"})
-}
-}
+    // Add users to group
+await Promise.all(user_id.map((uId) => 
+  ChatUser.create({
+    chat_id,
+    user_id: uId,
+    role: "group_member",
+  })
+));
+
+    // ✅ READY TO INSERT
+    return res.status(200).json({
+      message: "Users added to group",
+      users: user_id
+    });
+
+  } catch (err) {
+    console.log("error message", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
   
 
 

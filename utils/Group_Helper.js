@@ -1,5 +1,5 @@
 import express from "express";
-import {Chat,ChatUser,ChatMessage} from "../model/index.model.js"
+import {Chat,ChatUser,ChatMessage,User} from "../model/index.model.js"
 // import { use } from "react";
 // import Chat from "../model/chat.model.js"
 // import ChatUser from "../model/chatUser.model.js";
@@ -31,7 +31,7 @@ if(!user_check)
         isAdmin:false
     }
 }
-console.log("trueee");
+ 
 return{
     exists:true,
     group:true,
@@ -41,32 +41,32 @@ return{
 
 }
 
-export const check_group_member = async(user_id,chat_id)=>{
+export const check_group_member = async(user_ids,chat_id)=>{
      
-    const member_check = await ChatUser.findOne({
-        where:{user_id,chat_id}
-    });
-     
-    if(!member_check)
-    {
-        return {group_member:false};
+   const members = await ChatUser.findAll({
+    where: {
+      chat_id,
+      user_id: user_ids
     }
-    return { group_member:true};
-}
+  });
 
-export const check_user = async(user_id)=>{
-    console.log("check user",user_id);
-    const user_check = await ChatUser.findOne({
-        where:{user_id}
-    });
+  return {
+    members,           // existing members
+    alreadyInGroup: members.length > 0
+  };
+};
 
-   // console.log(user_check);
-
-    if(!user_check)
-    {
-        
-        return {user_exists:true};
-    }
+export const check_user = async(user_ids)=>{
      
-    return { user_exists:false};
-}
+    
+    const users = await User.findAll({
+    where: {
+      user_id: user_ids   // Sequelize auto uses IN (...)
+    }
+  });
+
+  return {
+    users,
+    allExist: users.length === user_ids.length
+  };
+};
