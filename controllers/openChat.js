@@ -368,6 +368,22 @@ export const sendGroupMessage = async (req, res) => {
       file_type: file_type || null
     })
 
+    // Socket Emit to Group Members
+
+    const io = getIo();
+  
+
+const socketPayload = {
+  chat_id,              // 👈 REQUIRED
+  sender_id,
+  message_text,
+  file_type,
+  file_url,
+  created_at: chatMessage.created_at,
+};
+
+// emit to ALL users in the group (room)
+io.to(chat_id).emit("newGroupMessage", socketPayload);
     return res.status(201).json({
       success: true,
       message: sendMessage
