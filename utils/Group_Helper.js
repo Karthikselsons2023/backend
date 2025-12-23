@@ -42,7 +42,7 @@ return{
 }
 
 export const check_group_member = async(user_id,chat_id)=>{
-    console.log(user_id,chat_id);
+     
     const member_check = await ChatUser.findOne({
         where:{user_id,chat_id}
     });
@@ -55,16 +55,18 @@ export const check_group_member = async(user_id,chat_id)=>{
 }
 
 export const check_user = async(user_id)=>{
-    console.log(user_id);
-    const user_check = await ChatUser.findAll({
+    console.log("check user",user_id);
+    const user_check = await ChatUser.findOne({
         where:{user_id}
     });
 
-    console.log(user_check);
+   // console.log(user_check);
 
     if(!user_check)
     {
-        return {user_exists:false};
+        
+        return {user_exists:true};
     }
-    return { user_exists:true};
+     
+    return { user_exists:false};
 }

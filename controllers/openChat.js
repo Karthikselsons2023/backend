@@ -404,7 +404,8 @@ const socketPayload = {
 };
 
 // emit to ALL users in the group (room)
-io.to(chat_id).emit("newGroupMessage", socketPayload);
+io.to(String(chat_id)).emit("newGroupMessage", socketPayload);
+// io.to(chat_id).emit("newGroupMessage", socketPayload);
     return res.status(201).json({
       success: true,
       formattedMessages: socketPayload,
@@ -558,7 +559,7 @@ export const groupaddpeople = async(req,res)=>{
   const {user_check} = await check_user(user_id);
    //check the add user is ther in the group
   const { group_member } = await check_group_member(user_id,chat_id);
-   
+   console.log("user_exists",user_check);
   if(!user_check){ return res.status(400).json({message:"User not in the User List"})}
   if(group_member){ return res.status(400).json({message:"User allready in the Group"})}
   if(!group){ return res.status(400).json({message:"This is Private Chat"})}
