@@ -132,7 +132,7 @@ const { sender_id, receiver_id } = req.query;
 
     const messages = await ChatMessage.findAll({
       where: { chat_id },
-      attributes: ["user_id", "message_text", "created_at","file_url","file_type"],
+      attributes: ["id","user_id", "message_text", "created_at","file_url","file_type"],
       order: [["created_at", "ASC"]],
     });
 
@@ -313,7 +313,7 @@ export const getGroupMessages = async (req, res) => {
 
     var message_text = await ChatMessage.findAll({
       where: { chat_id: chatId },
-      attributes: ["user_id", "message_text", "file_url","file_type","created_at","chat_id"],
+      attributes: ["id","user_id", "message_text", "file_url","file_type","created_at","chat_id"],
       order: [["created_at", "ASC"]],
       include:[
         {
