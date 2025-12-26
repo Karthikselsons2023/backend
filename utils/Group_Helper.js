@@ -46,7 +46,8 @@ export const check_group_member = async(user_ids,chat_id)=>{
    const members = await ChatUser.findAll({
     where: {
       chat_id,
-      user_id: user_ids
+      user_id: user_ids,
+      group_status:0  
     }
   });
 

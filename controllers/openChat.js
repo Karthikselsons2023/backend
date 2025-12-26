@@ -558,6 +558,63 @@ const groupChatList = await Chat.findAll({
   }
 }
 //add people to group 
+// export const groupaddpeople = async (req, res) => {
+//   const { auth_id, user_id, chat_id } = req.body;
+
+//   try {
+//     if (!auth_id || !chat_id || !Array.isArray(user_id)) {
+//       return res.status(400).json({ message: "Invalid input" });
+//     }
+
+//     // Admin & group check
+//     const { exists, isAdmin, group } = await check_admin(auth_id, chat_id);
+//     if (!group) return res.status(400).json({ message: "This is Private Chat" });
+//     if (!exists) return res.status(400).json({ message: "Auth user not in chat" });
+//     if (!isAdmin) return res.status(400).json({ message: "Only admin can perform" });
+
+//     // Check users exist
+//     const { users, allExist } = await check_user(user_id);
+     
+//     if (!allExist) {
+//       return res.status(400).json({
+//         message: "Some users do not exist",
+//       });
+//     }
+
+//     // Check already in group
+//     const { members } = await check_group_member(user_id, chat_id);
+//     if (members.length > 0) {
+//       return res.status(400).json({
+//         message: "Some users already in group",
+//         alreadyMembers: members.map(m => m.user_id)
+//       });
+//     }
+
+//     console.log("Users to be added:", user_id);
+
+     
+ 
+//     // Add users to group
+// await Promise.all(user_id.map((uId) => 
+//   ChatUser.create({
+//     chat_id,
+//     user_id: uId,
+//     role: "group_member",
+//   })
+// ));
+
+//     // ✅ READY TO INSERT
+//     return res.status(200).json({
+//       message: "Users added to group",
+//       users: user_id
+//     });
+
+//   } catch (err) {
+//     console.log("error message", err);
+//     res.status(500).json({ message: "Internal Server Error" });
+//   }
+// };
+// add people to group
 export const groupaddpeople = async (req, res) => {
   const { auth_id, user_id, chat_id } = req.body;
 
@@ -573,47 +630,84 @@ export const groupaddpeople = async (req, res) => {
     if (!isAdmin) return res.status(400).json({ message: "Only admin can perform" });
 
     // Check users exist
-    const { users, allExist } = await check_user(user_id);
-     
+    const { allExist } = await check_user(user_id);
     if (!allExist) {
-      return res.status(400).json({
-        message: "Some users do not exist",
-      });
+      return res.status(400).json({ message: "Some users do not exist" });
     }
-
-    // Check already in group
+     // Check already in group
     const { members } = await check_group_member(user_id, chat_id);
+    console.log("Members already in group:", members);
     if (members.length > 0) {
       return res.status(400).json({
         message: "Some users already in group",
         alreadyMembers: members.map(m => m.user_id)
       });
     }
-
-    console.log("Users to be added:", user_id);
-
+    // 🔹 Fetch ALL existing members (active + removed)
+    const existingMembers = await ChatUser.findAll({
+      where: {
+        chat_id,
+        user_id
+      }
+    });
      
- 
-    // Add users to group
-await Promise.all(user_id.map((uId) => 
-  ChatUser.create({
-    chat_id,
-    user_id: uId,
-    role: "group_member",
-  })
-));
 
-    // ✅ READY TO INSERT
+    const activeMembers = existingMembers.filter(m => m.group_status == false);
+    console.log("Active members already in group:", activeMembers);
+
+    const removedMembers = existingMembers.filter(m => m.group_status === true);
+    console.log("Removed members to be reactivated:", removedMembers);
+
+    // ❌ Already active members
+    if (activeMembers.length > 0) {
+      return res.status(400).json({
+        message: "Some users already in group",
+        alreadyMembers: activeMembers.map(m => m.user_id)
+      });
+    }
+
+    // ♻️ Reactivate removed users
+    if (removedMembers.length > 0) {
+      await Promise.all(
+        removedMembers.map(m =>
+          ChatUser.update(
+            { group_status: 0 },
+            { where: { id: m.id } }
+          )
+        )
+      );
+    }
+
+    // 🆕 Add completely new users
+    const existingUserIds = existingMembers.map(m => m.user_id);
+    const newUsers = user_id.filter(
+      uId => !existingUserIds.includes(uId)
+    );
+
+    if (newUsers.length > 0) {
+      await Promise.all(
+        newUsers.map(uId =>
+          ChatUser.create({
+            chat_id,
+            user_id: uId,
+            role: "group_member",
+            group_status: 0
+          })
+        )
+      );
+    }
+
     return res.status(200).json({
-      message: "Users added to group",
-      users: user_id
+      message: "Users added to group successfully",
+      addedUsers: user_id
     });
 
   } catch (err) {
-    console.log("error message", err);
+    console.error("groupaddpeople error:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 //group make admin
 export const groupmakeadmin = async(req,res)=>{
 
