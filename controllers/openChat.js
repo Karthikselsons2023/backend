@@ -837,6 +837,42 @@ export const removegroupmember = async(req,res)=>{
     res.status(500).json({message:"Internal Server Error"})
   }
 }
+//change Group Name and Description
+
+export const changegroupname= async(req,res)=>{
+  try{
+    const {auth_id,chat_id,group_name,description}= req.body
+
+    if(!auth_id || !chat_id || !group_name){
+      return res.status(400).json({message:"auth_id, chat_id and group_name are required"})
+    }
+    // Admin & group check
+    const { exists, isAdmin, group } = await check_admin(auth_id, chat_id);
+    if (!group) return res.status(400).json({ message: "This is Private Chat" });
+    if (!exists) return res.status(400).json({ message: "Auth user not in chat" });
+    if (!isAdmin) return res.status(400).json({ message: "Only admin can perform" });
+
+    //update Group Name and Description
+    var changegroup = await Chat.update({
+      name:group_name,
+      descritpion:description
+    },
+    {
+      where:{id:chat_id}
+    });
+
+    return res.status(200).json({message:"Group Name and Description Changed Successfully"})
+
+
+  }
+  catch(err){
+    console.log("error message",err)
+    res.status(500).json({message:"Internal Server Error"})
+  }
+  
+}
+
+
 
 
 
