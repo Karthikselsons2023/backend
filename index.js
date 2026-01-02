@@ -28,9 +28,23 @@ app.use(express.urlencoded({ extended: true }));
  
 app.use(cookieParser());
 
+// app.use(cors({
+//   origin: ["http://localhost:5173", "http://192.168.1.18:5173","https://ripplecoin.in"],
+//   credentials: true
+// }));
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.1.18:5173","https://ripplecoin.in"],
-  credentials: true
+  origin: ["http://localhost:5173", "http://192.168.1.18:5173","https://frontend.ripplecoin.in"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+}));
+
+// Handle preflight requests for all routes
+app.options('*', cors({
+  origin: ["http://localhost:5173", "http://192.168.1.18:5173","https://frontend.ripplecoin.in"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 }));
 
 // routes
