@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.1.18:5173","https://sunfood.world/"],
+  origin: ["http://localhost:5173", "http://192.168.1.18:5173","https://ripplecoin.in"],
   credentials: true
 }));
 
