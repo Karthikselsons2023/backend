@@ -2,8 +2,15 @@ import { DataTypes } from "sequelize";
 import db from "../lib/db.js";
 
 const User = db.define("user", {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  user_id: { type: DataTypes.STRING, unique: true },
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  user_id: {
+    type: DataTypes.STRING,
+    unique: true
+  },
   name: DataTypes.STRING,
   email: DataTypes.STRING,
   password: DataTypes.STRING,
@@ -18,7 +25,16 @@ const User = db.define("user", {
   phone: DataTypes.STRING
 }, {
   tableName: "users",
-  timestamps: false
+  timestamps: false,
+
+  hooks: {
+    afterCreate: async (user) => {
+      const paddedId = String(user.id).padStart(4, "0");
+      const generatedUserId = `USR${paddedId}`;
+
+      await user.update({ user_id: generatedUserId });
+    }
+  }
 });
 
 export default User;

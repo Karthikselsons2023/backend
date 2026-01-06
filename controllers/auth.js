@@ -57,9 +57,6 @@ export const login = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-   
-
 export const checkAuth = async (req, res) => {
   try {
     res.status(200).json(req.user);
@@ -86,3 +83,27 @@ export const checkAuth = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+ export const register = async (req,res)=>{
+  try{
+    const { name, email, phone, profile } = req.body;
+
+    const user = await User.create({
+      name,
+      email,
+      phone,
+      profile
+    });
+
+    return res.status(201).json({
+      success: true,
+      user
+    });
+
+
+  }
+  catch(error){
+    console.log("Error in checkAuth controller", error.message);
+    res.status(500).json({ message: "Internal Server error" });
+    console.log("Generated User ID:", createdUser.user_id);
+  }
+ }
